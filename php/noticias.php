@@ -1,93 +1,142 @@
-<!DOCTYPE html>
-<html
-<head>
-	<title>Noticias</title>
-	<meta charset="utf-8">
-	<link href="../estilos/style.css" rel="stylesheet" type="text/css">
-</head>
-<body>
+<?php  
+	session_start();
+	//En caso de que haya una cookie la cogemos
+		if (isset($_COOKIE['Sesion'])) {
+			session_decode($_COOKIE['Sesion']);
+		}
+	include('../php/funciones.php');
 
- <div class="centro">
- 	<img src="../images/imghead.gif" width="100%">
- </div>
+	$activo=comprobarSesion();
+	//Restringir acceso
+	if ($_SESSION['tipo']=="I" || $_SESSION['tipo']=="R") {
+		echo"<meta http-equiv='REFRESH' content='0;URL=../index.php?error=true'>";
+			die();
+	}
+?>
 
-<div class="contenedor">
-<!-- ________________________Cabecera ___________________________________________________________________________-->
+<!-- ________________________Cabecera ____________________________________-->
 	<?php 
 	include('../php/codigohtml.php');
-	cabecera();
+	cabecera($_SESSION['tipo'],$activo);
  	?>
 
  	
-<!-- ________________________Cuerpo ___________________________________________________________________________-->
+<!-- ________________________Cuerpo ______________________________________-->
 	<div class="contenido">
 		
 		<div class="noticias">
-				<a href="../php/noticias_N.php"><div class="botones3pag"><h3>Crear Noticia</h3></div></a>
+		<!-- Botones de navegación por la sección de noticias-->
+				<a href="../php/noticias_N.php" ><div class="botones3pag" style='margin-left: 5%'><h3>Crear Noticia</h3></div></a>
 				<a href="../php/noticias_F.php"><div class="botones3pag"><h3>Buscar Noticia</h3></div></a>
 				<a href="../php/noticias_D.php"><div class="botones3pag"><h3>Borrar Noticia</h3></div></a>
+				<div class='titulopag'>Noticias</div>
 			
 
 			<?php 
-				include('../php/conexion.php');
+			
 				$conexion=conexion();
 				
 				if ($conexion==true) {
 					
 					if(isset($_GET['pag'])==TRUE){
-						$pag=$_GET['pag'];
-						$pag=$pag*5;
+						$pag=$_GET['pag'];//para la lista de la paginación
+						$pag1=$pag*5; //la noticia correspondera a la página multiplicada por 5
 					}else{
+						$pag1=0;
 						$pag=0;
-					}
-						echo "<div class='titulopag'><h1>Noticias</h1></div>";
-						$cons="SELECT * FROM noticias ORDER BY fecha DESC LIMIT $pag, 5" ;
+					}	//se pintarán solo 5 noticias respectivas a su página
+						$cons="SELECT * FROM noticias ORDER BY fecha DESC LIMIT $pag1, 5" ;
 						
-						$resul=mysqli_query($conexion,$cons) or die(mysqli_error());
+						$resul=mysqli_query($conexion,$cons);
 
-						while($fila=mysqli_fetch_array($resul, MYSQLI_ASSOC)){
+						$cantidad=mysqli_num_rows($resul);
+					
+						if ($cantidad!=0) {//Comprobaremos que hay algún campo que mostrar
 
-							echo "<br><div class='noticia'>";
-							echo "<div class='titulo'>".$fila["titular"]."</div>";
-							echo "<div class='subtitulo'><i><b>".$fila["subtitulo"]." | <span class='fecha'>".$fila["fecha"]."</span></b></i></div>";
-							echo "<img src='../".$fila["imagen"]."'>";
+
+							echo "<div class='tablasgeneral'><table>
+									<tr>
+										<th>Título</th>
+										<th>Fecha</th>
+										<th>Imagen</th>
+										<th>Cuerpo</th>
+										<th></th>
+									</tr>";
+
+							while($fila=mysqli_fetch_array($resul, MYSQLI_ASSOC)){
+							$fecha1=voltearfecha($fila['fecha']);
+							$cont=substr($fila["contenido"], 0, 30); 
 							
-							echo "<div class='cuerpo'>".$fila["contenido"]."</div>";
-							echo "<a href='#'><div class='boton'><i><b>Ver Más  >></b></i></div></a></div>";
-						}
+							echo "<tr>
+									<td>".$fila['titular']."</td>
+									<td>".$fecha1."</td>
+									<td>
+										<div class='imnoticias' 
+										style=
+											'background-image:url(../".$fila['imagen'].");
+											 background-size: auto 100px;'>
+										</div></td>
+									<td>".$cont."...</td>
+									<td><a href='noticias_S.php?id=".$fila['id']."'><img src='../images/lupa.png' width='40px'></a></td></tr>";
+
+						}//Cada noticia tendrá el botón de ver mas que lo mandará a la noticia completa.
+						echo "</table></div>";
+
+// -------------PAGINACIÓN--------------------------------------
 
 						$cons1="SELECT COUNT(*) cantidad FROM noticias ";
 						$resul1=mysqli_query($conexion,$cons1);
 						$fila = mysqli_fetch_array($resul1, MYSQLI_NUM);
 						$contadorpag=($fila[0]/5)+1;
-
+						
 						echo "<div class='pagina'><ul>";
+						$paga=$pag-1;
+						$pags=$pag+1;
 
+						//Pagina anterior
+						if ($paga>=0) {
+							echo "<a href='noticias.php?pag=$paga'><li> < </li></a>";
+						
+						}
+
+						//enumeración de las páginas
 						for($i=1;$i<$contadorpag;$i++){
 							$j=$i-1;
-							echo "<a href='noticias.php?pag=$j'><li class='sel'>$i</li></a>";
+							echo "<a href='noticias.php?pag=$j'><li ";
+							if ($j==$pag) { //Se marca la página en la que estamos
+								echo "class='sel'";
+							}
+							
+							echo ">$i</li></a>";
 						}		
+						//Pagina siguiente
+						if ($pags<($contadorpag-1)) {
+							echo "<a href='noticias.php?pag=$pags'><li> > </li></a>
+						";
+						}
 						
-						echo "</ul></div>";
-						
+						echo "</ul></div></div>";
+
+
+						}else{
+							echo"<div class='tablasgeneral'><table>
+									<tr>
+										<th>Aún no hay noticias registradas</th>
+									</tr>
+									</table>
+								</div>	";
+						}
+
 					}
 			
 				mysqli_close($conexion);
 			
 				
 			?>
+	
+		</div>
 			
-
-			
-				
-
-			
-	</div>
-	<div class="columna">
-		
-
-		</div>		
-</div>	
+	</div>	
 </div>
 
 <!-- ________________________pie de Pagia ___________________________________________________________________________-->

@@ -1,21 +1,21 @@
-<!DOCTYPE html>
-<html
-<head>
-	<title>Noticias</title>
-	<meta charset="utf-8">
-	<link href="../estilos/style.css" rel="stylesheet" type="text/css">
-	</head>
-<body>
+<?php  
+	session_start();
 
- <div class="centro">
- 	<img src="../images/imghead.gif" width="100%">
- </div>
+	include('../php/funciones.php');
 
-<div class="contenedor">
+	$activo=comprobarSesion();
+	//Restringir acceso
+	if ($_SESSION['tipo']=="I" || $_SESSION['tipo']=="R") {
+		echo"<meta http-equiv='REFRESH' content='0;URL=../index.php?error=true'>";
+			die();
+	}
+?>
+
+
 <!-- ________________________Cabecera ___________________________________________________________________________-->
 	<?php 
 	include('../php/codigohtml.php');
-	cabecera();
+	cabecera($_SESSION['tipo'],$activo);
  	?>
 
  	
@@ -23,48 +23,58 @@
 	<div class="contenido">
 		
 		<div class="noticias">
-				<a href="../php/noticias_N.php"><div class="botones3pag"><h3>Crear Noticia</h3></div></a>
+		<!-- Botones de navegación por la sección de noticias-->
+				<a href="../php/noticias_N.php"><div class="botones3pag" style='margin-left: 5%'><h3>Crear Noticia</h3></div></a>
 				<a href="../php/noticias_F.php"><div class="botones3pag"><h3>Buscar Noticia</h3></div></a>
 				<a href="../php/noticias_D.php"><div class="botones3pag"><h3>Borrar Noticia</h3></div></a>
+				<div class='titulopag'>Añadir Noticia</div>
+
 			<?php 
-				include('../php/conexion.php');
 				$conexion=conexion();
 				
 
 				
 				if ($conexion==true) {
+					//la siguiente consulta nos devolverá el número de id que se le asignará al nuevo campo
+
+					$cons="SELECT AUTO_INCREMENT FROM information_schema.TABLES WHERE TABLE_SCHEMA =  'agenda' and TABLE_NAME = 'noticias';";
+
+
+					$resul=mysqli_query($conexion,$cons);
+					$fila=mysqli_fetch_array($resul, MYSQLI_NUM);
+						$id=$fila[0];
 					
-						echo "<div class='titulopag'><h1>Añadir Noticia</h1></div>
-							  <div class='noticia'><form action='#' method='post' enctype='multipart/form-data'>
+						echo "<div class='formulario'><form action='#' method='post' enctype='multipart/form-data'>
+						 		ID<br>
+							  <input type='text' name='id' value='$id' readonly ><br>
 							  Titulo<br>
-							  <input type='text' name='titulo' value='' placeholder='Titulo'><br>
-							  Subtitulo<br>
-							  <input type='text' name='apellidos' value='' placeholder='Apellidos'><br>
+							  <input type='text' name='titulo' value='' placeholder='Titulo' required><br>
 							  Cuerpo<br>
-							  <textarea name='cuerpo' >Escribe la noticia aquí</textarea><br>
+							  <textarea name='cuerpo' required>Escribe la noticia aquí</textarea><br>
 							  Imagen<br>
-							  <input type='file' name='imagen' value=''><br>
+							  <input type='file' name='imagen' value='' required><br>
 							  Fecha de activación<br>
-							  <input type='date' name='fecha' value='' placeholder=''><br>
-							  <input type='submit' name='enviar' value='enviar'><br>
+							  <input type='date' name='fecha' value='' placeholder='' required><br>
+							  <input type='submit' name='enviar' value='Enviar'><br>
 							  </form></div>";
 
-
-						if(isset($_POST['enviar'])==TRUE){
+						//tras recoger la información la guardamos en las diferentes variables
+						if(isset($_POST['enviar'])){
+							$id=$_POST['id'];
 							$titulo=$_POST['titulo'];
-							$subtitulo=$_POST['subtitulo'];
-							$cuerpo=$_POST['cuerpo'];
+							$subtitulo="";
+							$cuerpo= $_POST['cuerpo'];
 							$nombretemporal=$_FILES["imagen"]["tmp_name"];
 							$fecha=$_POST['fecha'];
 							$tipo= $_FILES["imagen"]["type"];
 
 							$carpeta='../images/noticias';
-							$nombre=$titulo;
-							if (!file_exists($carpeta)) {
+							$nombre=$id;
+							if (!file_exists($carpeta)) {//si no existe creamos la carpeta donde se almacenarán las imagenes
 								mkdir($carpeta);
 							}
 
-							switch ($tipo) {
+							switch ($tipo) {//comprobamos la extension de las imagenes
 								case 'image/jpeg': $nombre.=".jpg";
 									break;
 								case 'image/png': $nombre.=".png";
@@ -76,39 +86,29 @@
 							if ($nombre!="no") {
 								$ruta=$carpeta."/$nombre";
 								move_uploaded_file($nombretemporal, $ruta);
-							}
-							$ruta="images/noticias/$nombre";
-							$cons="INSERT INTO noticias VALUES ('', '$titulo', '$subtitulo', '$cuerpo', '$ruta', '$fecha');" ;
-							echo "Noticia creada con exito";
-								$resul=mysqli_query($conexion,$cons) or die(mysqli_error());
-
-
-						}
+								$ruta="images/noticias/$nombre";
+								$cons="INSERT INTO noticias VALUES ('', '$titulo', '$cuerpo', '$ruta', '$fecha');" ;
 							
-						//echo"<meta http-equiv='REFRESH' content='5';URL=noticias.php?bien=true'>";
-							
-						}
 						
-					mysqli_close($conexion);
-			
-				
-			
-				
+								$resul1=mysqli_query($conexion,$cons);
+								//hacemos como que se carga el nuevo campo y redireccionamos a la pagina principal de la seccion
+								echo "<div class='noticiamini'>Noticia creada exitosamente<br><img src='../images/giphy.gif'><br>Espere...</div>";
+								echo"<meta http-equiv='REFRESH' content='3;URL=noticias.php?bien=true'>";
+
+							}else{
+								 echo "<div class='noticiamini'>El formato de la imagen es incorrecto<br>Intentelo de nuevo.</div>";
+							}
+							
+
+						}
+							
+					}
+						
+					mysqli_close($conexion);				
 			?>
-			
 
-			
-				
-
-			
 	</div>
-	<div class="columna">
-			
-			<div class="cajavip">
-				
-			</div>
-
-		</div>		
+	
 </div>	
 </div>
 

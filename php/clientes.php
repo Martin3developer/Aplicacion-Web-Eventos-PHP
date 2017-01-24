@@ -1,71 +1,91 @@
-<!DOCTYPE html>
-<html
-<head>
-	<title>Clientes</title>
-	<meta charset="utf-8">
-	<link href="../estilos/style.css" rel="stylesheet" type="text/css">
-</head>
-<body>
+<?php  
+	session_start();
+	//En caso de que haya una cookie la cogemos
+		if (isset($_COOKIE['Sesion'])) {
+			session_decode($_COOKIE['Sesion']);
+		}
 
- <div class="centro">
- 	<img src="../images/imghead.gif" width="100%">
- </div>
+	include('../php/funciones.php');
 
-<div class="contenedor">
-<!-- ________________________Cabecera ___________________________________________________________________________-->
+	$activo=comprobarSesion();
+	//Restringir acceso
+	if ($_SESSION['tipo']=="I" || $_SESSION['tipo']=="R") {
+		echo"<meta http-equiv='REFRESH' content='0;URL=../index.php?error=true'>";
+		die();
+
+	}
+?>
+
+<!-- ________________________Cabecera ___________________________________-->
 	<?php 
 	include('../php/codigohtml.php');
-	cabecera();
+	cabecera($_SESSION['tipo'],$activo);
  	?>
 
- 	
-<!-- ________________________Cuerpo ___________________________________________________________________________-->
+<!-- ________________________Cuerpo ____________________________________-->
 	<div class="contenido">
 		
 		<div class="noticias">
-				<a href="../php/clientes_N.php"><div class="botones3pag"><h3>Añadir Nuevo</h3></div></a>
-				<a href="../php/clientes_F.php"><div class="botones3pag"><h3>Buscar</h3></div></a>
-			
+		<!-- Botones de navegación por la sección de clientes-->
+				<a href="../php/clientes_N.php"><div class="botones3pag" style='margin-left: 10%'><h3>Crear Cliente</h3></div></a>
+				<a href="../php/clientes_F.php"><div class="botones3pag"><h3>Buscar Cliente</h3></div></a>
+				<div class='titulopag'>Clientes</div>
 
 			<?php 
-				include('../php/conexion.php');
+				
 				$conexion=conexion();
 				
 				if ($conexion==true) {
 					
-						$cons="SELECT * FROM clientes ORDER BY id ASC" ;
+						$cons="SELECT * FROM clientes WHERE id <> 0 ORDER BY id ASC " ;//mostramos la información de todos los clientes
 						
-						$resul=mysqli_query($conexion,$cons) or die(mysqli_error());
-						echo "<div class='titulopag'><h1>Clientes</h1></div>";
-						echo "<table>
+						$resul=mysqli_query($conexion,$cons);
+
+						$cantidad=mysqli_num_rows($resul);
+					
+						if ($cantidad!=0) {//Comprobaremos que hay algún campo que mostrar
+
+						echo "<div class='tablasgeneral'>
+								<table>
 									<tr>
-										<th>ID</th>
+										
 										<th>Nombre</th>
 										<th>Apellidos</th>
 										<th>Dirección</th>
-										<th>Teléfono1</th>
-										<th>Teléfono2</th>
+										<th>Teléfono</th>
+										
 										<th>Nick</th>
 										<th>Contraseña</th>
+										<th></th>
 									</tr>";
 
 						while($fila=mysqli_fetch_array($resul, MYSQLI_ASSOC)){
-								echo "<tr>
-										<td>".$fila['id']."</td>
+								if ($fila['id']!=0) {
+									echo "<tr>
+									
 										<td>".$fila['nombre']."</td>
 										<td>".$fila['apellidos']."</td>
 										<td>".$fila['direccion']."</td>
-										<td>".$fila['telefono1']."</td>
-										<td>".$fila['telefono2']."</td>
+										<td>".$fila['telefono1']." / ".$fila['telefono2']."</td>
 										<td>".$fila['nick']."</td>
 										<td>".$fila['pass']."</td>
-										<td><a href='clientes_E.php?id=".$fila['id']."'>editar</a></td>
-									  </tr>";
+										<td><a href='clientes_E.php?id=".$fila['id']."'><img src='../images/edit.png' width='30px'></a></td>
+									  </tr>";//añadimos el botón de modificar al final de cada uno.
+								}
+								
 						}
 
-						echo"</table>";
-						
-					}
+						echo"</table></div>";
+					}else{
+						echo"<div class='tablasgeneral'>
+								<table>
+									<tr>
+										<th>Aún no hay clientes registrados</th>
+									</tr>
+								</table>
+							</div>";
+					}	
+				}
 			
 				mysqli_close($conexion);
 			
@@ -74,12 +94,7 @@
 	
 			
 	</div>
-	<div class="columna">
-			
-			
-			
 
-		</div>		
 </div>	
 </div>
 

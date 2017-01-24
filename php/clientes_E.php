@@ -1,21 +1,25 @@
-<!DOCTYPE html>
-<html
-<head>
-	<title>Clientes</title>
-	<meta charset="utf-8">
-	<link href="../estilos/style.css" rel="stylesheet" type="text/css">
-</head>
-<body>
+<?php  
+	session_start();
+		//En caso de que haya una cookie la cogemos
+		if (isset($_COOKIE['Sesion'])) {
+			session_decode($_COOKIE['Sesion']);
+		}
+	include('../php/funciones.php');
 
- <div class="centro">
- 	<img src="../images/imghead.gif" width="100%">
- </div>
+	$activo=comprobarSesion();
+	//Restringir acceso
+	if ($_SESSION['tipo']=="I" || $_SESSION['tipo']=="R") {
+		echo"<meta http-equiv='REFRESH' content='0;URL=../index.php?error=true'>";
+			die();
+	}
+?>
 
-<div class="contenedor">
+
+
 <!-- ________________________Cabecera ___________________________________________________________________________-->
 	<?php 
 	include('../php/codigohtml.php');
-	cabecera();
+	cabecera($_SESSION['tipo'],$activo);
  	?>
 
  	
@@ -23,45 +27,46 @@
 	<div class="contenido">
 		
 		<div class="noticias">
-				<a href="../php/clientes_N.php"><div class="botones3pag"><h3>Añadir Nuevo</h3></div></a>
-				<a href="../php/clientes_F.php"><div class="botones3pag"><h3>Buscar</h3></div></a>
+		<!-- Botones de navegación por la sección de clientes-->
+				<a href="../php/clientes_N.php"><div class="botones3pag" style='margin-left: 10%'><h3>Crear Cliente</h3></div></a>
+				<a href="../php/clientes_F.php"><div class="botones3pag"><h3>Buscar Cliente</h3></div></a>
 			
 
 			<?php 
-				include('../php/conexion.php');
+				
 				$conexion=conexion();
 
 				
 				if ($conexion==true) {
 
 
-					if(isset($_GET['id'])==TRUE){
+					if(isset($_GET['id'])==TRUE){ //tomamos la información del cliente con el id aportado
 
 					$cons= "SELECT * FROM clientes WHERE id = ".$_GET['id'].";";
 						
-					$resul=mysqli_query($conexion,$cons) or die(mysqli_error());
+					$resul=mysqli_query($conexion,$cons);
 
-					while($fila=mysqli_fetch_array($resul, MYSQLI_ASSOC)){
+					while($fila=mysqli_fetch_array($resul, MYSQLI_ASSOC)){//mostramos la información en el formulario
 							
 
-						echo "<div class='titulopag'><h1>Editar Cliente con ID = ".$fila['id']."</h1></div>
-							  <div class='noticia'><form action='clientes_E.php?id=".$fila['id']."' method='post'>
+						echo "<div class='titulopag'>Editar Cliente </div>
+							  <div class='formulario'><form action='clientes_E.php?id=".$fila['id']."' method='post'>
 							  Nombre<br>
-							  <input type='text' name='nombre' value='".$fila['nombre']."' placeholder='Nombre'><br>
+							  <input type='text' name='nombre' value='".$fila['nombre']."' placeholder='Nombre' required><br>
 							  Apellidos<br>
-							  <input type='text' name='apellidos' value='".$fila['apellidos']."' placeholder='Apellidos'><br>
+							  <input type='text' name='apellidos' value='".$fila['apellidos']."' placeholder='Apellidos' required><br>
 							  Dirección<br>
-							  <input type='text' name='direccion' value='".$fila['direccion']."' placeholder='Direccion'><br>
+							  <input type='text' name='direccion' value='".$fila['direccion']."' placeholder='Direccion' required><br>
 							  Teléfono 1<br>
-							  <input type='text' name='telefono1' value='".$fila['telefono1']."' placeholder='Teléfono'><br>
+							  <input type='number' name='telefono1' min='100000000' max='999999999' value='".$fila['telefono1']."' placeholder='Teléfono' required><br>
 							  Teléfono 2 (Opcional)<br>
-							  <input type='text' name='telefono2' value='".$fila['telefono2']."' placeholder='Teléfono(Opcional)'><br><br>
-							  Nombre de usuario<br>
-							  <input type='text' name='nick' value='".$fila['nick']."'><br>
+							  <input type='number' name='telefono2' min='100000000' max='999999999' value='".$fila['telefono2']."' placeholder='Teléfono(Opcional)'><br><br>
+							  Nombre de usuario (no se puede modificar)<br>
+							  <input type='text' name='nick' value='".$fila['nick']."' required readonly><br>
 							  Contraseña<br>
-							  <input type='text' name='pass' value='".$fila['pass']."'><br>
+							  <input type='text' name='pass' value='".$fila['pass']."' required><br>
 							 
-							  <input type='submit' name='enviar' value='enviar'><br>
+							  <input type='submit' name='enviar' value='Enviar'><br>
 							  </form></div>";
 						}	
 					}
@@ -79,23 +84,25 @@
 							}else{
 								$telefono3=$telefono2;
 							}
-							$nick=$_POST['nick'];
 							$pass=$_POST['pass'];
 
 						
 
-							$cons="UPDATE clientes SET nombre = '$nombre' , apellidos = '$apellidos', direccion = '$direccion', telefono1='$telefono1' , telefono2='$telefono3' , nick = '$nick' WHERE id =  ".$_GET['id'].";";
+							$cons="UPDATE clientes SET nombre = '$nombre' , apellidos = '$apellidos', direccion = '$direccion', telefono1='$telefono1' , telefono2='$telefono3' , pass = '$pass' WHERE id =  ".$_GET['id'].";";
 							
 							
-								$resul=mysqli_query($conexion,$cons) or die(mysqli_error());
-								//echo "Cliente $nombre actualizado exitosamente";
-								echo"<meta http-equiv='REFRESH' content='1';URL=clientes.php?bien=true'>";
+								$resul=mysqli_query($conexion,$cons);
+
+								//mensaje de confirmación con gif de loading
+								echo "<div class='noticiamini'>Cliente modificado satisfactoriamente.<br><img src='../images/giphy.gif'><br>Espere...</div>";
+								
+								echo"<meta http-equiv='REFRESH' content='1;URL=clientes.php'>";
 						
 								
 
 						}
 							
-						//echo"<meta http-equiv='REFRESH' content='5';URL=noticias.php?bien=true'>";
+						
 							
 					}
 						

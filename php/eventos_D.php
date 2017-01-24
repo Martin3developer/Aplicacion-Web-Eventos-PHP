@@ -1,91 +1,166 @@
-<!DOCTYPE html>
-<html
-<head>
-	<title>Noticias</title>
-	<meta charset="utf-8">
-	<link href="../estilos/style.css" rel="stylesheet" type="text/css">
-	</head>
-<body>
+<?php  
+	session_start();
+	//En caso de que haya una cookie la cogemos
+		if (isset($_COOKIE['Sesion'])) {
+			session_decode($_COOKIE['Sesion']);
+		}
+	include('../php/funciones.php');
 
- <div class="centro">
- 	<img src="../images/imghead.gif" width="100%">
- </div>
+	$activo=comprobarSesion();
+	//Restringir acceso
+	if ($_SESSION['tipo']=="I" || $_SESSION['tipo']=="R") {
+		echo"<meta http-equiv='REFRESH' content='0;URL=../index.php?error=true'>";
+			die();
+	}
+?>
 
-<div class="contenedor">
+
+ 
 <!-- ________________________Cabecera ___________________________________________________________________________-->
 	<?php 
 	include('../php/codigohtml.php');
-	cabecera();
+	cabecera($_SESSION['tipo'],$activo);
  	?>
 
  	
-<!-- ________________________Cuerpo ___________________________________________________________________________-->
+<!-- _________________________  Cuerpo ___________________________________________________________________________-->
 	<div class="contenido">
 		
 		<div class="noticias">
-				<a href="../php/noticias_N.php"><div class="botones3pag"><h3>Crear Noticia</h3></div></a>
-				<a href="../php/noticias_F.php"><div class="botones3pag"><h3>Buscar Noticia</h3></div></a>
-				<a href="../php/noticias_D.php"><div class="botones3pag"><h3>Borrar Noticia</h3></div></a>
+		<!-- Botones de navegación por la sección de eventos-->
+				<a href="../php/eventos_N.php"><div class="botones3pag" style='margin-left: 5%'><h3>Crear Evento</h3></div></a>
+				<a href="../php/eventos_F.php"><div class="botones3pag"><h3>Buscar Evento</h3></div></a>
+				<a href="../php/eventos_D.php"><div class="botones3pag"><h3>Borrar Evento</h3></div></a>
 			<?php 
-				include('../php/conexion.php');
+				
 				$conexion=conexion();
 				
 
 				
-				if ($conexion==true) {
+				if ($conexion==true) {//Formulario de búsqueda
 					
-						echo "<div class='titulopag'><h1>Borrar Noticia</h1></div>
-							  <div class='noticia'><form action='#' method='post'>
-							  Introduce el Titulo<br>
-							  <input type='text' name='titulo' value='' placeholder='Titulo'><br>
-							  <input type='submit' name='enviar' value='enviar'><br>
-							  </form></div>";
+						echo "<div class='titulopag'>Borrar Evento</div>
+							 <div class='formulario'><form action='#' method='get'>
+							  Introduce el Nombre del Servicio, Cliente o la Fecha<br>
+							  <input type='text' name='nombre' value='' ><br>
+							  <input type='text' name='order' value=1 hidden>
+							  <input type='submit' name='enviar' value='Enviar'><br>
+							  </form>
+							  * Recuerda que solo se pueden borrar eventos que aún no se hayan realizado.
+							  </div>";
 
 
-						if(isset($_POST['enviar'])==TRUE){
-							$titulo=$_POST['titulo'];
-							$selector="";
-						
-							$cons="SELECT * FROM noticias WHERE titular like '%$titulo%';" ;
-							$resul=mysqli_query($conexion,$cons) or die(mysqli_error());
-							while($fila=mysqli_fetch_array($resul, MYSQLI_ASSOC)){
-
-							echo "<br><div class='noticia'>";
-							echo "<div class='titulo'>".$fila["titular"]."</div>";
-							echo "<div class='subtitulo'><i><b>".$fila["subtitulo"]." / ".$fila["fecha"]."</b></i></div>";
-							echo "<img src='../".$fila["imagen"]."'>";
+						if(isset($_GET['borrar'])){ //borrara el evento con los datos enviados
+							$id_servicio=$_GET['id_servicio'];
+							$id_cliente=$_GET['id_cliente'];
+							$fecha=$_GET['fecha'];
+							$cons="DELETE FROM eventos WHERE id_servicio = '$id_servicio' AND id_cliente = '$id_cliente' AND fecha = '$fecha';" ;
+							echo $cons;
+							$resul=mysqli_query($conexion,$cons);
 							
-							echo "<div class='cuerpo'>".$fila["contenido"]."</div>";
-							echo "<a href='noticias_D.php?selector=".$fila['imagen']."'><div class='boton'><i><b>borrar  >></b></i></div></a></div>";
+								
+							echo"<meta http-equiv='REFRESH' content='0;URL=eventos.php'>";
+						}
+							  
+
+
+						if(isset($_GET['enviar'])==TRUE ){
+							$nombre=$_GET['nombre'];
+							$order=$_GET['order'];
+						
+								//tomamos el nombre de cliente y de servicio en vez de mostrar el id
+								$cons="SELECT s.nombre snombre, c.nombre cnombre, e.fecha efecha, e.lugar elugar, e.hora ehora, e.id_servicio eid, e.id_cliente cid
+										FROM eventos e, clientes c, servicios s
+										WHERE 
+										s.id = e.id_servicio
+										AND 
+										c.id = e.id_cliente
+										AND 
+										(s.nombre LIKE '%$nombre%' || c.nombre LIKE '%$nombre%' || e.fecha LIKE '%$nombre%')					
+										ORDER BY";
+										if ($order=="1") {//ordenamos por el campo que elijamos
+											$cons.=" s.nombre ASC;"; }
+										if ($order=="2") {
+											$cons.=" c.nombre ASC;"; }
+										if ($order=="3") {
+											$cons.=" e.fecha ASC;"; }
+						
+						$resul=mysqli_query($conexion,$cons);
+							$cantidad=mysqli_num_rows($resul);
+
+				if ($cantidad!=0) {//Comprobaremos que hay algún campo que mostrar
+
+						
+						
+						echo "<div class='tablasgeneral'><table>
+									<tr>
+										<th ><a href='../php/eventos_D.php?enviar=Enviar&order=1&nombre=$nombre'>Servicios 
+										";
+										if ($order=="1") {
+											echo "<br>&#9660;";
+										}else{//Flechas
+											echo "<br>&#9650";
+										}
+						echo"			<th ><a href='../php/eventos_D.php?enviar=Enviar&order=2&nombre=$nombre'>Clientes 
+										";
+										if ($order=="2") {
+											echo "<br>&#9660;";
+										}else{//Flechas
+											echo "<br>&#9650";
+										}
+						echo"				
+										<th>Lugar</th>
+										<th ><a href='../php/eventos_D.php?enviar=Enviar&order=3&nombre=$nombre'>Fecha 
+										";
+										if ($order=="3") {
+											echo "<br>&#9660;";
+										}else{//Flechas
+											echo "<br>&#9650";
+										}
+						echo"			<th>Hora</th>
+										<th></th>
+									</tr>";
+
+
+						
+						$fechahoy=fechactual();//Controlamos el día actual para saber si se pueden borrar o no los servicios.
+							
+						while($fila=mysqli_fetch_array($resul, MYSQLI_ASSOC)){
+							
+							$fecha=voltearfecha($fila['efecha']);
+							$hora=substr($fila['ehora'], 0, 5); //Para tener una hora sin segundos.
+								echo "<tr>
+										<td>".$fila['snombre']."</td>
+										<td>".$fila['cnombre']."</td>
+										<td>".$fila['elugar']."</td>
+										<td>".$fecha."</td>
+										<td>".$hora."</td>";
+
+										if ($fila['efecha']> $fechahoy) { /*Solo se pueden borrar los futuros eventos.*/
+											echo"<td><a href='eventos_D.php?borrar=true&id_servicio=".$fila['eid']."&id_cliente=".$fila['cid']."&fecha=".$fecha."'><img src='../images/delete.png' width='20px'></a></td>";//el botón de borrar estará activo para los que sean posteriores a la fecha actual.
+										}else{
+											echo"<td><img src='../images/deleten.png' width='20px'></td>";
+										}
+										
+										echo "</tr>";
 							}
-							
-						}
-						
-						
-						
 
-						if(isset($_GET['selector'])==TRUE){ // Eliminar la imagen de la carpeta
-							$ruta1=$_GET['selector'];
+							echo"</table></div>";
 
-							if (file_exists("../".$ruta1)==true) {
-							    unlink($ruta1);
-							    echo 'El archivo '.$ruta1.' ha sido borrado';
-							  } else {
-							    echo 'no se ha borrado '.$ruta1;
-							  }
-						
-							$cons="DELETE FROM noticias WHERE imagen = '$ruta1';" ;
-							echo "Noticia borrada satisfactoriamente.";
-							$resul=mysqli_query($conexion,$cons) or die(mysqli_error());
+						}else{
+							echo "<div class='tablasgeneral'><table>
+									<tr>
+										<th >No hay resultados que coincidan con la búsqueda</th>
+									</tr>
+									</table>
+								  </div>";
 						}
-						
+					}
+					
+				}	
 
 					
-
 						
-						//echo"<meta http-equiv='REFRESH' content='5';URL=noticias.php?bien=true'>";
-					
-						}
 				mysqli_close($conexion);
 				
 			?>
@@ -98,23 +173,7 @@
 	</div>
 	<div class="columna">
 			
-			<div class="cajavip">
-				<a href="#"><iframe src="https://calendar.google.com/calendar/embed?showTitle=0&amp;showNav=0&amp;showPrint=0&amp;showTabs=0&amp;showCalendars=0&amp;showTz=0&amp;height=600&amp;wkst=2&amp;bgcolor=%23FFFFFF&amp;ctz=Europe%2FMadrid" style="border-width:0" width="300" height="300" frameborder="0" scrolling="no"></iframe></a>
-			</div>
-			<div class="caja">LOGIN
-				<div class="login">
-					Username<br>
-					<input type="text" class="texto"><BR>
-					Password<br>
-					<input type="text" class="texto"><BR>
-					<input type="checkbox" class="otro">Remember me<br>
-					<input type="submit" value="Login-->" class="otro">
-				</div>
-					<ul>
-						<a href="#"><li>Register</li></a>
-						<a href="#"><li>Lost password</li></a>
-					</ul>
-			</div>
+			
 
 		</div>		
 </div>	

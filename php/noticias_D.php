@@ -1,21 +1,24 @@
-<!DOCTYPE html>
-<html
-<head>
-	<title>Noticias</title>
-	<meta charset="utf-8">
-	<link href="../estilos/style.css" rel="stylesheet" type="text/css">
-	</head>
-<body>
+<?php  
+	session_start();
+	//En caso de que haya una cookie la cogemos
+		if (isset($_COOKIE['Sesion'])) {
+			session_decode($_COOKIE['Sesion']);
+		}
+	include('../php/funciones.php');
 
- <div class="centro">
- 	<img src="../images/imghead.gif" width="100%">
- </div>
+	$activo=comprobarSesion();
+	//Restringir acceso
+	//Restringir acceso
+	if ($_SESSION['tipo']=="I" || $_SESSION['tipo']=="R") {
+		echo"<meta http-equiv='REFRESH' content='0;URL=../index.php?error=true'>";
+			die();
+	}
+?>
 
-<div class="contenedor">
 <!-- ________________________Cabecera ___________________________________________________________________________-->
 	<?php 
 	include('../php/codigohtml.php');
-	cabecera();
+	cabecera($_SESSION['tipo'],$activo);
  	?>
 
  	
@@ -23,61 +26,109 @@
 	<div class="contenido">
 		
 		<div class="noticias">
-				<a href="../php/noticias_N.php"><div class="botones3pag"><h3>Crear Noticia</h3></div></a>
+		<!-- Botones de navegación por la sección de noticias-->
+				<a href="../php/noticias_N.php"><div class="botones3pag" style='margin-left: 5%'><h3>Crear Noticia</h3></div></a>
 				<a href="../php/noticias_F.php"><div class="botones3pag"><h3>Buscar Noticia</h3></div></a>
 				<a href="../php/noticias_D.php"><div class="botones3pag"><h3>Borrar Noticia</h3></div></a>
+				<div class='titulopag'>Borrar Noticia</div>
 			<?php 
-				include('../php/conexion.php');
+			
 				$conexion=conexion();
 				
 
 				
-				if ($conexion==true) {
-					
-						echo "<div class='titulopag'><h1>Borrar Noticia</h1></div>
-							  <div class='noticia'><form action='#' method='post'>
-							  Introduce el Titulo<br>
-							  <input type='text' name='titulo' value='' placeholder='Titulo'><br>
-							  <input type='submit' name='enviar' value='enviar'><br>
+				if ($conexion==true) { //formulario de búsqueda
+					 
+						echo "
+							  <div class='formulario'><form action='#' method='get'>
+							  Introduce el Título o la Fecha de activación<br>
+							  <input type='text' name='titulo' value='' required><br>
+							  <input type='text' name='order' value='1' hidden>
+							  <input type='submit' name='enviar' value='Enviar'><br>
 							  </form></div>";
 
-
-						if(isset($_POST['enviar'])==TRUE){
-							$titulo=$_POST['titulo'];
-							$selector="";
+ 
+						if(isset($_GET['enviar'])==TRUE){
+							$titulo=$_GET['titulo'];
+							$order=$_GET['order'];//Variable que define el orden
 						
-							$cons="SELECT * FROM noticias WHERE titular like '%$titulo%';" ;
-							$resul=mysqli_query($conexion,$cons) or die(mysqli_error());
-							while($fila=mysqli_fetch_array($resul, MYSQLI_ASSOC)){
-
-							echo "<br><div class='noticia'>";
-							echo "<div class='titulo'>".$fila["titular"]."</div>";
-							echo "<div class='subtitulo'><i><b>".$fila["subtitulo"]." / ".$fila["fecha"]."</b></i></div>";
-							echo "<img src='../".$fila["imagen"]."'>";
-							
-							echo "<div class='cuerpo'>".$fila["contenido"]."</div>";
-							echo "<a href='noticias_D.php?selector=".$fila['imagen']."'><div class='boton'><i><b>borrar  >></b></i></div></a></div>";
+							if ($order=="1") {
+								$cons="SELECT * FROM noticias WHERE titular like '%$titulo%' || fecha like '%$titulo%' ORDER BY titular;" ;
+							}else{
+								$cons="SELECT * FROM noticias WHERE titular like '%$titulo%' || fecha like '%$titulo%' ORDER BY fecha;" ;
 							}
-							
+;
+							$resul=mysqli_query($conexion,$cons) or die(mysqli_error());
+							$cantidad=mysqli_num_rows($resul);
+						if ($cantidad!=0) {//Comprobaremos que hay algún campo que mostrar	
+
+
+							echo "<div class='tablasgeneral'><table>
+									<tr>
+									<th ><a href='../php/noticias_F.php?enviar=enviar&order=1&titulo=$titulo'>Título";
+										if ($order=="1") {
+											echo "<br>&#9660;";//Flecha para arriba o para abajo
+										}else{
+											echo "<br>&#9650";
+										}
+								echo "  </a></th>
+										<th ><a href='../php/noticias_F.php?enviar=enviar&order=2&titulo=$titulo'>Fecha";
+										if ($order=="2") {
+											echo "<br>&#9660;";//Flecha para arriba o para abajo
+										}else{
+											echo "<br>&#9650";
+										}
+								echo "  </a></th>
+										<th>Imagen</th>
+										<th>Cuerpo</th>
+										<th></th>
+									</tr>";
+
+						while($fila=mysqli_fetch_array($resul, MYSQLI_ASSOC)){
+						$fecha1=voltearfecha($fila['fecha']);//ponemos la fecha en formato español
+						$cont=substr($fila["contenido"], 0, 30);  //reducimos el contenido para mostrarlo en tabla
+						echo "<tr>
+										<td>".$fila['titular']."</td>
+										<td>".$fecha1."</td>
+										<td><img src=../".$fila['imagen']." width='100px;'></td>
+										<td>".$cont."...</td>
+										<td><a href='noticias_D.php?selector=".$fila['id']."&imagen=".$fila['imagen']."'><img src='../images/delete.png' width='20px'></a></td></tr>";
+
 						}
-						
+						echo "</table></div>";
+						}else{
+					echo "<div class='tablasgeneral'><table>
+								<tr>
+								<th>No hay noticias que coincidan</th>
+								</tr>
+								</table>
+							</div>";
+				}
+					}
+
 						
 						
 
 						if(isset($_GET['selector'])==TRUE){ // Eliminar la imagen de la carpeta
-							$ruta1=$_GET['selector'];
+							$ruta1=$_GET['imagen'];
+							$id=$_GET['selector'];
+
+						
+							$cons="DELETE FROM noticias WHERE id = '$id';" ;
+							
+							$resul=mysqli_query($conexion,$cons);
+
+							echo "<div class='noticiamini'>Noticia borrada satisfacoriamente.<br><img src='../images/giphy.gif'><br>Espere...</div>";
+								echo"<meta http-equiv='REFRESH' content='3;URL=noticias.php?bien=true'>";
 
 							if (file_exists("../".$ruta1)==true) {
-							    unlink($ruta1);
-							    echo 'El archivo '.$ruta1.' ha sido borrado';
-							  } else {
-							    echo 'no se ha borrado '.$ruta1;
-							  }
-						
-							$cons="DELETE FROM noticias WHERE imagen = '$ruta1';" ;
-							echo "Noticia borrada satisfactoriamente.";
-							$resul=mysqli_query($conexion,$cons) or die(mysqli_error());
+							    unlink("../".$ruta1);
+							  } 
+							echo "</div>";;
 						}
+
+					
+			}
 						
 
 					
@@ -85,7 +136,7 @@
 						
 						//echo"<meta http-equiv='REFRESH' content='5';URL=noticias.php?bien=true'>";
 					
-						}
+						
 				mysqli_close($conexion);
 				
 			?>
@@ -98,23 +149,7 @@
 	</div>
 	<div class="columna">
 			
-			<div class="cajavip">
-				<a href="#"><iframe src="https://calendar.google.com/calendar/embed?showTitle=0&amp;showNav=0&amp;showPrint=0&amp;showTabs=0&amp;showCalendars=0&amp;showTz=0&amp;height=600&amp;wkst=2&amp;bgcolor=%23FFFFFF&amp;ctz=Europe%2FMadrid" style="border-width:0" width="300" height="300" frameborder="0" scrolling="no"></iframe></a>
-			</div>
-			<div class="caja">LOGIN
-				<div class="login">
-					Username<br>
-					<input type="text" class="texto"><BR>
-					Password<br>
-					<input type="text" class="texto"><BR>
-					<input type="checkbox" class="otro">Remember me<br>
-					<input type="submit" value="Login-->" class="otro">
-				</div>
-					<ul>
-						<a href="#"><li>Register</li></a>
-						<a href="#"><li>Lost password</li></a>
-					</ul>
-			</div>
+			
 
 		</div>		
 </div>	

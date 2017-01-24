@@ -1,86 +1,206 @@
 <?php
-function cabecera(){
-echo"<header>
-		
-		<nav class='navegador'>
-			<div class='izq'>
-				<ul>
-					<a href='/index.php'><li class='iconazul'>
-						&nbsp;&nbsp;<img src='../images/home.png'>
-					</li></a>
-					<a href='../php/noticias.php'><li class='flecha'>
-						Noticias&nbsp;&nbsp;
-						<ul class='submenu'>
-							<li><a href='../php/noticias_N.php'>Añadir Nueva</a></li>
-							<li><a href='../php/noticias_F.php'>Buscar</a></li>
-							<li><a href='../php/noticias_D.php'>Borrar</a></li>
-						</ul>
-					</li></a>
-					<a href='../php/clientes.php'><li class='flecha'>
-						Clientes&nbsp;&nbsp;
-						<ul class='submenu'>
-							<li><a href='../php/clientes_N.php'>Añadir Nuevo</a></li>
-							<li><a href='../php/clientes_F.php'>Buscar</a></li>
-						</ul>
-					</li></a>
-					<a href='../php/servicios.php'><li class='flecha'>
+function cabecera($user , $activo){
+
+	//Método para pintar el navegador dependiendo de la página en la que esté.
+$url1 = parse_url($_SERVER['REQUEST_URI']);
+$url=$url1['path'];
+
+
+ if (isset($_GET['LaCuriosidadMatoAlGato'])) {//botón del pie de página
+			echo "<div class='yo'></div>";;
+		}
+
+$usuario=$user;
+
+echo"
+
+<!DOCTYPE html>
+<html>
+	<head>
+	<title>Nuestro evento</title>
+	<meta charset='utf-8'>
+	<meta name='theme-color' content='#1D1D1D'>
+	<meta name='viewport' content='width=device-width; initial-scale=1.0; maximum-scale=1.0;'>   
+
+	<link  rel='stylesheet' href='../estilos/style.css'>
+	<link rel='stylesheet' href='../estilos/font-awesome.min.css' >
+	</head>
+<body>
+
+
+<header id='header' class='cabecera'>
+	
+
+			<a href='/index.php' ><div class='logogrande'></div></a>
+ 			<a href='/index.php' ><div src='../images/imghead1.gif' class='logo'></div></a>
+ 			<div class='usuario'>";
+
+ 		if ($_SESSION['tipo']=="I") {
+ 			echo"<a href=../php/acceder.php><div class='circulo'><i class='fa fa-user' ></i></div></a>
+ 			<br>";
+ 		}else{
+ 			echo "<a href=../php/perfil.php ><div class='circulo registrado'>".ucfirst($_SESSION['nick'])."</div></a><br>";
+ 		}
+ 			echo"
+ 			<div class='btn-menu' id='btn-menu'><i class='icono  fa fa-bars ' aria-hidden='true'></i> </div>
+ 			<br><b style='margin-left:-15px; '>$activo</b>
+ 		</div>
+
+
+ 		<div class='enlaces' id='enlaces'>"; 
+		//---------INVITADO----------------------------------------------------------------	
+if ($usuario=='I') {
+		//-------------------------------------------Inicio
+
+	echo"<a href='/index.php' ";
+	if ($url=="/index.php") {
+		echo " class='sel'";
+	}
+	echo"><i class='fa fa-home fa-3x'></i>
+	</a>";	
+
+	//-------------------------------------------Servicios
+	echo"<a href='../php/servicios.php' ";
+	if ($url=="/php/servicios.php" || $url=="/php/servicios_E.php" || $url=="/php/servicios_N.php"  || $url=="/php/servicios_F.php") {
+		echo " class='sel'";
+	}
+	echo">
+		Servicios&nbsp;&nbsp;
+	</a>";
+
+	echo" <a href='../php/contacto.php' ";
+	if ($url=="/php/contacto.php") {
+		echo " class='sel'";
+	}
+	echo">Contacto&nbsp;&nbsp;
+	 </a>";
+
+
+			
+	}
+
+		//---------REGISTRADO----------------------------------------------------------------	
+		if ($usuario=='R') {
+
+
+
+					//-------------------------------------------Servicios
+					echo"<a href='../php/servicios.php'";
+					if ($url=="/php/servicios.php" || $url=="/php/servicios_E.php" || $url=="/php/servicios_N.php"  || $url=="/php/servicios_F.php") {
+						echo " class='sel'";
+					}
+					echo">
 						Servicios&nbsp;&nbsp;
-						<ul class='submenu'>
-							<li><a href='../php/servicios_N.php'>Añadir Nuevo</a></li>
-							<li><a href='../php/servicios_F.php?opcion3=buscar'>Buscar</a></li>
-						</ul>
-					</li></a>
-					<a href='../php/eventos.php'><li class='flecha'>
-						Eventos&nbsp;&nbsp;
-						<ul class='submenu'>
-							<li><a href='../php/eventos_N.php'>Añadir Nuevo</a></li>
-							<li><a href='../php/eventos_F.php'>Buscar</a></li>
-							<li><a href='../php/eventos_D.php'>Borrar</a></li>
-						</ul>
-					</li></a>
-					<a href='#'><li>
-						Contacto&nbsp;&nbsp;
-					</li></a>
-					<a href='#'><li>
-						Acceder&nbsp;&nbsp;
-					</li></a>
-				</ul>
-			</div>
-			<div class='der'>
-				<ul>
-					<li class='iconazul'>
-						&nbsp;&nbsp;&nbsp;&nbsp;
-					</li>
-					<li>
-						<input type='text' name='buscar' placeholder='Buscar Noticia' width='50px' >
-					</li>
-					<a href='#'><li>
-						<img src='../images/pinterest.png' height='20px'>
-					</li></a>
-				</ul>
-			</div>
-		</nav>
-	</header>";
+					</a>";
+
+					//-------------------------------------------Mis Datos
+					echo"<a href='../php/perfil.php'";
+					if ($url=="/php/perfil.php") {
+						echo " class='sel'";
+					}
+					echo">
+						Perfil&nbsp;&nbsp;
+					</a>";
+
+					//-------------------------------------------Eventos
+					
+					$fecha2=getdate();
+					if ($fecha2['mon']<10) {
+						$fecha2['mon']="0".$fecha2['mon'];
+					}
+					echo"<a href='../php/eventos.php?mes=".$fecha2['mon']."&anio=".$fecha2['year']."&mostrar=Mostrar#'";
+					if ($url=="/php/eventos.php" || $url=="/php/eventos_D.php" || $url=="/php/eventos_F.php" || $url=="/php/eventos_N.php") {
+						echo " class='sel'";
+					}
+					echo">Eventos&nbsp;&nbsp;
+					 </a>";
+
+					 echo" <a href='../php/contacto.php' ";
+					if ($url=="/php/contacto.php") {
+						echo " class='sel'";
+					}
+					echo">Contacto&nbsp;&nbsp;
+					 </a>";
+
+				
+		}	
+
+		//---------ADMINISTRADOR----------------------------------------------------------------	
+		if ($usuario=='A') {
+
+
+					//-------------------------------------------Noticias
+					echo"<a href='../php/noticias.php'";
+					if ($url=="/php/noticias.php" || $url=="/php/noticias_D.php" || $url=="/php/noticias_F.php" || $url=="/php/noticias_N.php" || $url=="/php/noticias_S.php") {
+						echo " class='sel'";
+					}
+					echo">Noticias&nbsp;&nbsp;
+					 </a>";
+
+					//-------------------------------------------Clientes
+					
+						echo"<a href='../php/clientes.php' ";
+						if ($url=="/php/clientes.php" || $url=="/php/clientes_E.php" || $url=="/php/clientes_F.php" || $url=="/php/clientes_N.php") {
+							echo " class='sel'";
+						}
+						echo">Clientes&nbsp;&nbsp;
+						 </a>";
+					
+				
+					
+					//-------------------------------------------Servicios
+					echo"<a href='../php/servicios.php' ";
+					if ($url=="/php/servicios.php" || $url=="/php/servicios_E.php" || $url=="/php/servicios_N.php"  || $url=="/php/servicios_F.php") {
+						echo " class='sel'";
+					}
+					echo">
+						Servicios&nbsp;&nbsp;
+					 </a>";
+					
+					//-------------------------------------------Eventos
+					
+					echo"<a href='../php/eventos.php' ";
+					if ($url=="/php/eventos.php" || $url=="/php/eventos_D.php" || $url=="/php/eventos_F.php" || $url=="/php/eventos_N.php") {
+						echo " class='sel'";
+					}
+					echo">Eventos&nbsp;&nbsp;
+					 </a></div>";
+				
+
+					
+			}
+	
+	
+echo"</header>";
+
+
+
+
+					
+			echo "<div class='contenedor'>";
 }
 
 function pie(){
+		//metodo que pinta el pie de página
 
-	echo "<footer>
+	echo "	
+	
+	<footer>
 			<div class='estilo1'>
-				<input type='button' name=''></input>
+				<form action='#' method='get' ><input type='submit' name='LaCuriosidadMatoAlGato' value=''></input></form>
 			</div>
+
 			<div class='estilo2'>
-			<div>© Copyright 2016, All Rights Reserved Martín Carmona </div>
+				<div>© Copyright 2016, All Rights Reserved Martín Carmona </div>
 				
 				<div class='redes'>
 				<ul>
-					</li>
 
-							<a href='#'><li>
+							<a href='../php/contacto.php' ><li>
 								Martín Carmona López
 							</li></a>
 
-							<a href='#'><li>
+							<a href='../php/contacto.php' ><li>
 								Práctica Entorno Servidor
 							</li></a>
 						
@@ -89,7 +209,13 @@ function pie(){
 				</div>
 			</div>
 			
-		</footer>";
+			
+		</footer>
+
+	<script src='../js/headroom.min.js'></script>
+	<script src='../js/jquery.min.js'></script>	
+	<script src='../js/menu.js'></script>		
+";
 }
 
 
